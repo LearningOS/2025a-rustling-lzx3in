@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -70,13 +69,57 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+    where
+        T: Ord,
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        let mut result = LinkedList::new();
+        result.length += list_a.length + list_b.length;
+
+        let mut a_curr = list_a.start;
+        let mut b_curr = list_b.start;
+
+        while let (Some(a_node), Some(b_node)) = (a_curr, b_curr) {
+            unsafe {
+                let a_val = &(*a_node.as_ptr()).val;
+                let b_val = &(*b_node.as_ptr()).val;
+                let chosen_node;
+                if a_val <= b_val {
+                    chosen_node = a_node;
+                    a_curr = (*a_node.as_ptr()).next;
+                } else {
+                    chosen_node = b_node;
+                    b_curr = (*b_node.as_ptr()).next;
+                }
+
+                (*chosen_node.as_ptr()).next = None; // break its next link
+                match result.end {
+                    None => result.start = Some(chosen_node),
+                    Some(end) => (*end.as_ptr()).next = Some(chosen_node),
+                }
+                result.end = Some(chosen_node);
+            }
         }
+
+        let mut rest = a_curr.or(b_curr);
+        if let Some(mut node) = rest {
+            unsafe {
+                match result.end {
+                    None => result.start = Some(node),
+                    Some(end) => (*end.as_ptr()).next = Some(node),
+                }
+                loop {
+                    let next = (*node.as_ptr()).next;
+                    if let Some(next_node) = next {
+                        node = next_node;
+                    } else {
+                        result.end = Some(node);
+                        break;
+                    }
+                }
+            }
+        }
+
+        result
 	}
 }
 
